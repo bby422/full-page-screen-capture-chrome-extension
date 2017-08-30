@@ -195,7 +195,7 @@ window.CaptureAPI = (function() {
             // `openPage` again if we had to split up the image
             var urlName = ('filesystem:chrome-extension://' +
                            chrome.i18n.getMessage('@@extension_id') +
-                           '/temporary/' + filename);
+                           '/persistent/bbypics/' + filename);
 
             callback(urlName);
         }
@@ -205,14 +205,19 @@ window.CaptureAPI = (function() {
 
         // create a blob for writing to a file
         var reqFileSystem = window.requestFileSystem || window.webkitRequestFileSystem;
-        reqFileSystem(window.TEMPORARY, size, function(fs){
-            fs.root.getFile(filename, {create: true}, function(fileEntry) {
-                fileEntry.createWriter(function(fileWriter) {
-                    fileWriter.onwriteend = onwriteend;
-                    fileWriter.write(blob);
-                }, errback); // TODO - standardize error callbacks?
-            }, errback);
+        navigator.webkitPersistentStorage.requestQuota(size, function (gratedBytes) {
+                reqFileSystem(window.PERSISTENT, gratedBytes, function(fs) {
+                    fs.root.getDirectory('bbypics', { create: true }, function(dirEntry) {
+                        dirEntry.getFile(filename, { create: true }, function(fileEntry) {
+                            fileEntry.createWriter(function(fileWriter) {
+                                fileWriter.onwriteend = onwriteend;
+                                fileWriter.write(blob);
+                            }, errback); // TODO - standardize error callbacks?
+                        }, errback);
+                    })
+                }, errback);
         }, errback);
+
     }
 
 
